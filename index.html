@@ -42,6 +42,15 @@
                                 <input data-bind="value:username" class="form-control" ></input>
                                 <button class="btn btn-secondary" data-bind="click:loaduser">Load</button>
                             </div>
+                            <div id="loading" style="display:none">
+                                <div class="d-flex align-items-center mt-3 mb-3">
+                                    <strong>Loading...</strong>
+                                    <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
+                                </div>
+                            </div>
+                            <div id="loadfailed" style="display:none" class="text-danger">
+                                Load Failed. (Generally due to BGG XML "Processing" response). Retry in a few seconds
+                            </div>
                         </div>
                     </div>
                     <div id="filter" class="card mt-3">
@@ -146,15 +155,6 @@
                                     </button>
                                 </div>
                                 <div class="card-body collapse show" id="gamelist-card-body">
-                                    <div id="loading" style="display:none">
-                                        <div class="d-flex align-items-center mt-3 mb-3">
-                                            <strong>Loading...</strong>
-                                            <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
-                                        </div>
-                                    </div>
-                                    <div id="loadfailed" style="display:none" class="text-danger">
-                                        Load Failed. (Generally due to BGG XML "Processing" response). Retry in a few seconds
-                                    </div>
                                     <!-- ko foreach: games_filtered_sorted -->
                                     <div class="card mb-3">
                                         <div class="card-header d-flex">
