@@ -162,7 +162,7 @@
                                             <div>
                                                 <span class="d-flex"><a target="_blank" data-bind="attr: {href: 'https://boardgamegeek.com/boardgame/'+objectid()}"><h5 data-bind="text:name"></h5></a> <span class="text-muted ml-1">(<span data-bind="text:yearpublished"></span>)</span> </span>
                                                 <span>
-                                                    <span> <!-- Player Counts Icons-->
+                                                    <nobr class="mr-3"> <!-- Player Counts Icons-->
                                                     <!-- ko foreach: suggested_player_counts -->
                                                         <!-- ko if: numplayers()>0 && numplayers()<=$parent.maxplayers()-->
                                                             <h3 class="player-icon" data-bind="css:{
@@ -181,8 +181,8 @@
                                                             </h3>
                                                         <!-- /ko -->
                                                     <!-- /ko -->
-                                                    </span>
-                                                    <span class="ml-3">
+                                                    </nobr>
+                                                    <nobr class="mr-3">
                                                         <span data-bind="css: {
                                                             'filter-danger':stats_weight_avg()>=4,
                                                             'filter-warning':stats_weight_avg()>=3.4 && stats_weight_avg()<4,
@@ -197,8 +197,8 @@
                                                             <img style="-webkit-transform-origin-x: 0;" data-bind="style: {'transform' : 'scale('+(stats_weight_avg()-Math.floor(stats_weight_avg()))+',1)'}" src="images/weight_icon.svg" class="weight-icon">
                                                         </span>
                                                         <span class="text-muted" data-bind="text: '('+stats_weight_avg().toFixed(1)+')'"></span>
-                                                    </span>
-                                                    <span class="ml-3" >
+                                                    </nobr>
+                                                    <nobr >
                                                         <!-- ko foreach: [...Array(Math.min(12,Math.floor(maxplaytime()/30))).keys()]-->
                                                         <!-- ko if: $data<Math.floor($parent.minplaytime()/30)-->
                                                         <h4 class="time-icon"><i class="bi bi-clock-fill" data-bind="css:{
@@ -219,7 +219,7 @@
                                                              - <span data-bind="visible:Math.floor(maxplaytime()/60)>0,text:Math.floor(maxplaytime()/60)+'H'"> </span><span data-bind="visible:(maxplaytime()-Math.floor(maxplaytime()/60)*60)>0, text:(maxplaytime()-Math.floor(maxplaytime()/60)*60)+'M'"> </span>
                                                             <!-- /ko -->)
                                                         </span>
-                                                    </span>
+                                                    </nobr>
                                                 </span>
                                             </div>
                                             <div class="ml-auto p-2" style="margin-top: -12px; margin-bottom: -12px; margin-right: -20px;" data-bind="class:'has-rating-'+Math.round(stats_rating_bayesavg())" >
