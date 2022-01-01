@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- <script src="vendor/papaparse.min.js"></script>  -->
+        <!-- <script type='text/javascript' src="readonly_df.js?version=2021_11_27_0250" type = "module"></script>  -->
+        <!-- <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>  -->
+        <!-- <script src="https://cdn.jsdelivr.net/npm/danfojs@0.3.3/lib/bundle.min.js"></script> -->
+        <script
+            src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+        <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js'></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <script src="collection.js?version=2021_12_29"></script>
+        <link rel="stylesheet" href="collection.css?version=2021_12_29"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@forevolve/bootstrap-dark@1.0.0/dist/css/bootstrap-dark.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.1/font/bootstrap-icons.css">
+        <title>BGG Collection Analyzer</title>
+    </head>
+
+    <body>
+        <main role="main" class="container-fluid">
+            <div class="d-none d-sm-flex justify-content-between">
+                <h1><a>BGG Collection Analyzer</a></h1> <!-- data-bind="attr:{href:homeurl}"-->
+            </div>
+            <div class="d-block d-sm-none">
+                <h4><a>BGG Collection Analyzer</a></h4> <!-- data-bind="attr:{href:homeurl}"-->
+            </div>
+            <div class="row mb-10">
+                <div class="col-12 col-xxl-2 col-xl-3 col-lg-4">
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <i class="bi bi-cloud-download-fill"></i> Load
+                            <button class="float-right" type="button" data-bs-toggle="collapse" data-bs-target="#load-card-body" aria-expanded="true" aria-controls="collapseOne">
+                            </button>
+                        </div>
+                        <div class="card-body collapse show" id="load-card-body">
+                            <div id="username" class="show btn-group d-flex">
+                                <input data-bind="value:username" class="form-control" ></input>
+                                <button class="btn btn-secondary" data-bind="click:loaduser">Load</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="filter" class="card mt-3">
+                        <div class="card-header">
+                            <i class="bi bi-filter"></i> Filter
+                            <button class="float-right" type="button" data-bs-toggle="collapse" data-bs-target="#filter-card-body" aria-expanded="true" aria-controls="collapseOne">
+                            </button>
+                        </div>
+                        <div class="card-body collapse show" id="filter-card-body">
+                            
+                            <h4>
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#playerCountSelection">
+                                    Player Count:
+                                </button>
+                            </h4>
+                            <div id="playerCountSelection" class="accordion-collapse collapse show mb-3">
+                                <select data-bind="options: playerCounts, selectedOptions: selectedPlayerCounts" size="6" multiple="true" class="form-select" ></select>
+                            </div>
+                            <h4>
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#maxTimeSelection">
+                                    Max Time:
+                                </button>
+                            </h4>
+                            <div id="maxTimeSelection" class="accordion-collapse collapse show mb-3">
+                                <input type="range" min=0 max=600 step="15" class="form-range" data-bind="value: maxTime, valueUpdate: 'input'">
+                                <span>
+                                    <span data-bind="text:Math.floor(maxTime()/60)"> </span> hours, <span data-bind="text:maxTime()-Math.floor(maxTime()/60)*60"> </span> minutes 
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sort" class="card mt-3">
+                        <div class="card-header">
+                            <i class="bi bi-sort-down"></i> Sort
+                            <button class="float-right" type="button" data-bs-toggle="collapse" data-bs-target="#sort-card-body" aria-expanded="true" aria-controls="collapseOne">
+                            </button>
+                        </div>
+                        <div class="card-body collapse show" id="sort-card-body">
+
+                            <h4>
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#preferredWeightSelection">
+                                    Preferred Weight:
+                                </button>
+                            </h4>
+                            <div id="preferredWeightSelection" class="accordion-collapse collapse show mb-3">
+                                <input type="range" min=1 max=5 step="0.1" class="form-range" data-bind="value: preferredWeight, valueUpdate: 'input'">
+                                <div>
+                                    <span class="ml-3" data-bind="css: {
+                                        'filter-danger':preferredWeight()>=4,
+                                        'filter-warning':preferredWeight()>=3.4 && preferredWeight()<4,
+                                        'filter-success':preferredWeight()>=2.6 && preferredWeight()<3.4,
+                                        'filter-info':preferredWeight()>=1.8 && preferredWeight()<2.6,
+                                        'filter-primary':preferredWeight()>=1 && preferredWeight()<1.8,
+                                    }">
+                                        <img data-bind="visible: preferredWeight()>=5" src="images/weight_icon.svg" class="weight-icon">
+                                        <img data-bind="visible: preferredWeight()>=4" src="images/weight_icon.svg" class="weight-icon">
+                                        <img data-bind="visible: preferredWeight()>=3" src="images/weight_icon.svg" class="weight-icon">
+                                        <img data-bind="visible: preferredWeight()>=2" src="images/weight_icon.svg" class="weight-icon">
+                                        <img data-bind="visible: preferredWeight()>=1" src="images/weight_icon.svg" class="weight-icon">
+                                        <img style="-webkit-transform-origin-x: 0;" data-bind="style: {'transform' : 'scale('+(preferredWeight()-Math.floor(preferredWeight()))+',1)'}" src="images/weight_icon.svg" class="weight-icon">
+                                    </span>
+                                </div>
+                                <!-- <div class="d-flex justify-content-between">
+                                    <span class="filter-primary">
+                                        <img src="images/weight_icon.svg" class="weight-icon">
+                                    </span>
+                                    <span class="filter-danger">
+                                        <img src="images/weight_icon.svg" class="weight-icon">
+                                        <img src="images/weight_icon.svg" class="weight-icon">
+                                        <img src="images/weight_icon.svg" class="weight-icon">
+                                        <img src="images/weight_icon.svg" class="weight-icon">
+                                        <img src="images/weight_icon.svg" class="weight-icon">
+                                    </span>
+                                </div> -->
+                            </div>
+                            <h4>
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#preferredCategorySelection">
+                                    Preferred Category:
+                                </button>
+                            </h4>
+                            <div id="preferredCategorySelection" class="accordion-collapse collapse mb-3">
+                                <select data-bind="options: categories, selectedOptions: selectedCategories" size="6" multiple="true" class="form-select" ></select>
+                            </div>
+                            <h4>
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#preferredMechanicSelection">
+                                    Preferred Mechanic:
+                                </button>
+                            </h4>
+                            <div id="preferredMechanicSelection" class="accordion-collapse collapse mb-3">
+                                <select data-bind="options: mechanics, selectedOptions: selectedMechanics" size="6" multiple="true" class="form-select" ></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-xxl-10 col-xl-9 col-lg-8">
+                    <div class="row">
+                        <div class="col-12 "><!-- col-xxl-6 -->
+                            <div id="gamelist" class="card mt-3">
+                                <div class="card-header">
+                                    <i class="bi bi-diagram-3"></i> Game List
+                                    <button class="float-right" type="button" data-bs-toggle="collapse" data-bs-target="#gamelist-card-body" aria-expanded="true" aria-controls="collapseOne">
+                                    </button>
+                                </div>
+                                <div class="card-body collapse show" id="gamelist-card-body">
+                                    <div id="loading" style="display:none">
+                                        <div class="d-flex align-items-center mt-3 mb-3">
+                                            <strong>Loading...</strong>
+                                            <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
+                                        </div>
+                                    </div>
+                                    <div id="loadfailed" style="display:none" class="text-danger">
+                                        Load Failed. (Generally due to BGG XML "Processing" response). Retry in a few seconds
+                                    </div>
+                                    <!-- ko foreach: games_filtered_sorted -->
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex">
+                                            <img class="rounded d-block boardgame-image" data-bind="attr:{src:image}" >
+                                            <div>
+                                                <span class="d-flex"><a target="_blank" data-bind="attr: {href: 'https://boardgamegeek.com/boardgame/'+objectid()}"><h5 data-bind="text:name"></h5></a> <span class="text-muted ml-1">(<span data-bind="text:yearpublished"></span>)</span> </span>
+                                                <span>
+                                                    <span> <!-- Player Counts Icons-->
+                                                    <!-- ko foreach: suggested_player_counts -->
+                                                        <!-- ko if: numplayers()>0 && numplayers()<=$parent.maxplayers()-->
+                                                            <h3 class="player-icon" data-bind="css:{
+                                                                'text-success':notrecommended_percvotes()<=0.1 || best_percvotes()>0.5,
+                                                                'text-primary':best_percvotes()<0.5 && notrecommended_percvotes()<=0.2 && notrecommended_percvotes()>0.1,
+                                                                'text-info':best_percvotes()<0.5 && notrecommended_percvotes()<=0.3 && notrecommended_percvotes()>0.2,
+                                                                'text-warning':best_percvotes()<0.5 && notrecommended_percvotes()<=0.4 && notrecommended_percvotes()>0.3,
+                                                                'text-danger':best_percvotes()<0.5 && notrecommended_percvotes()>0.4,
+                                                                'text-dark':numplayers()<$parent.minplayers()
+                                                            }">
+                                                                <i class="bi bi-person-fill" style="margin-right: -8px;" data-bind="css: {
+                                                                    'bi-person-fill':numplayers()>=$parent.minplayers(),
+                                                                    'bi-person':numplayers()<$parent.minplayers()
+                                                                }"></i>
+                                                                <span class="player-icon-text" data-bind="text:numplayers"></span>
+                                                            </h3>
+                                                        <!-- /ko -->
+                                                    <!-- /ko -->
+                                                    </span>
+                                                    <span class="ml-3">
+                                                        <span data-bind="css: {
+                                                            'filter-danger':stats_weight_avg()>=4,
+                                                            'filter-warning':stats_weight_avg()>=3.4 && stats_weight_avg()<4,
+                                                            'filter-success':stats_weight_avg()>=2.6 && stats_weight_avg()<3.4,
+                                                            'filter-info':stats_weight_avg()>=1.8 && stats_weight_avg()<2.6,
+                                                            'filter-primary':stats_weight_avg()>=1 && stats_weight_avg()<1.8,
+                                                        }">
+                                                            <img data-bind="visible: stats_weight_avg()>4" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>3" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>2" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>1" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img style="-webkit-transform-origin-x: 0;" data-bind="style: {'transform' : 'scale('+(stats_weight_avg()-Math.floor(stats_weight_avg()))+',1)'}" src="images/weight_icon.svg" class="weight-icon">
+                                                        </span>
+                                                        <span class="text-muted" data-bind="text: '('+stats_weight_avg().toFixed(1)+')'"></span>
+                                                    </span>
+                                                    <span class="ml-3" >
+                                                        <!-- ko foreach: [...Array(Math.min(12,Math.floor(maxplaytime()/30))).keys()]-->
+                                                        <!-- ko if: $data<Math.floor($parent.minplaytime()/30)-->
+                                                        <h4 class="time-icon"><i class="bi bi-clock-fill" data-bind="css:{
+                                                            'text-warning':$data>=Math.floor($root.maxTime()*0.7/30) && $data<Math.floor($root.maxTime()/30),
+                                                            'text-danger':$data>=Math.floor($root.maxTime()/30)
+                                                        }"></i></h4>
+                                                        <!-- /ko-->
+                                                        <!-- ko ifnot: $data<Math.floor($parent.minplaytime()/30)-->
+                                                        <h4 class="time-icon"><i class="bi bi-clock" data-bind="css:{
+                                                            'text-warning':$data>=Math.floor($root.maxTime()*0.7/30) && $data<Math.floor($root.maxTime()/30),
+                                                            'text-danger':$data>=Math.floor($root.maxTime()/30)
+                                                        }"></i></h4>
+                                                        <!-- /ko-->
+                                                        <!-- /ko-->
+                                                        <span class="text-muted">
+                                                            ( <span data-bind="visible:Math.floor(minplaytime()/60)>0,text:Math.floor(minplaytime()/60)+'H'"> </span><span data-bind="visible:(minplaytime()-Math.floor(minplaytime()/60)*60)>0, text:(minplaytime()-Math.floor(minplaytime()/60)*60)+'M'"> </span>
+                                                            <!-- ko if: minplaytime()!=maxplaytime()-->
+                                                             - <span data-bind="visible:Math.floor(maxplaytime()/60)>0,text:Math.floor(maxplaytime()/60)+'H'"> </span><span data-bind="visible:(maxplaytime()-Math.floor(maxplaytime()/60)*60)>0, text:(maxplaytime()-Math.floor(maxplaytime()/60)*60)+'M'"> </span>
+                                                            <!-- /ko -->)
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <div class="ml-auto p-2" style="margin-top: -12px; margin-bottom: -12px; margin-right: -20px;" data-bind="class:'has-rating-'+Math.round(stats_rating_bayesavg())" >
+                                                <h1 class="m-0" data-bind="text: stats_rating_bayesavg().toFixed(1)"></h1>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            Owned by: <span data-bind="text:owners().join(', ')"></span>
+                                            <!-- ko foreach: categories-->
+                                            <!-- ko if: $root.selectedCategories().includes($data)-->
+                                            <span class="badge badge-primary text-white" data-bind="text:$data"></span>
+                                            <!-- /ko -->
+                                            <!-- ko ifnot: $root.selectedCategories().includes($data)-->
+                                            <!-- <span class="badge badge-warning text-dark" data-bind="text:$data"></span> -->
+                                            <!-- /ko -->
+                                            <!-- /ko -->
+                                            <!-- ko foreach: mechanics-->
+                                            <!-- ko if: $root.selectedMechanics().includes($data)-->
+                                            <span class="badge badge-success text-white" data-bind="text:$data"></span>
+                                            <!-- /ko -->
+                                            <!-- ko ifnot: $root.selectedMechanics().includes($data)-->
+                                            <!-- <span class="badge badge-danger text-white" data-bind="text:$data"></span> -->
+                                            <!-- /ko -->
+                                            <!-- /ko -->
+                                        </div>
+                                    </div>
+                                    <!-- /ko -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer class="collection-footer">
+            <i>Found an issue? Have a Github account? Add an <a class="text-info" href="https://github.com/Valadian/BGGCollectionAnalyzer/issues">issue report</a> </i><br>
+            <i>BGG Collection Analyzer created by <a class="text-info" href="mailto:admin@jesseberger.me">Jesse Berger</a>
+        </footer>
+    </body>
+</html> 
