@@ -101,7 +101,7 @@
                                     <label class="form-check-label text-muted" data-bind="css: {
                                         'text-muted': !sortByWeight(),
                                         'text-success': sortByWeight
-                                    }">Enable Filtering By Weight</label>
+                                    }">Enable Sorting By Weight</label>
                                 </div>
                                 <input type="range" min=1 max=5 step="0.1" class="form-range" data-bind="value: preferredWeight, valueUpdate: 'input', attr: {
                                     disabled: !sortByWeight()
@@ -208,10 +208,11 @@
                                                             'filter-info':stats_weight_avg()>=1.8 && stats_weight_avg()<2.6,
                                                             'filter-primary':stats_weight_avg()>=1 && stats_weight_avg()<1.8,
                                                         }">
-                                                            <img data-bind="visible: stats_weight_avg()>4" src="images/weight_icon.svg" class="weight-icon">
-                                                            <img data-bind="visible: stats_weight_avg()>3" src="images/weight_icon.svg" class="weight-icon">
-                                                            <img data-bind="visible: stats_weight_avg()>2" src="images/weight_icon.svg" class="weight-icon">
-                                                            <img data-bind="visible: stats_weight_avg()>1" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>=5" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>=4" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>=3" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>=2" src="images/weight_icon.svg" class="weight-icon">
+                                                            <img data-bind="visible: stats_weight_avg()>=1" src="images/weight_icon.svg" class="weight-icon">
                                                             <img style="-webkit-transform-origin-x: 0;" data-bind="style: {'transform' : 'scale('+(stats_weight_avg()-Math.floor(stats_weight_avg()))+',1)'}" src="images/weight_icon.svg" class="weight-icon">
                                                         </span>
                                                         <span class="text-muted" data-bind="text: '('+stats_weight_avg().toFixed(1)+')'"></span>
