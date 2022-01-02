@@ -158,7 +158,14 @@
                                     <!-- ko foreach: games_filtered_sorted -->
                                     <div class="card mb-3">
                                         <div class="card-header d-flex">
-                                            <img class="rounded d-block boardgame-image" data-bind="attr:{src:image}" >
+                                            <div style="width:80;height:80">
+                                                <img class="rounded d-block boardgame-image" data-bind="attr:{src:image}" >
+                                                <div class="owner-container">
+                                                    <!-- ko foreach: owners-->
+                                                    <div class="rounded-circle owner-circle" data-bind="text: $data.substring(0,2),attr:{title:'Owned by: '+$data}"></div>
+                                                    <!-- /ko -->
+                                                </div>
+                                            </div>
                                             <div>
                                                 <span class="d-flex"><a target="_blank" data-bind="attr: {href: 'https://boardgamegeek.com/boardgame/'+objectid()}"><h5 data-bind="text:name"></h5></a> <span class="text-muted ml-1">(<span data-bind="text:yearpublished"></span>)</span> </span>
                                                 <span>
@@ -226,8 +233,7 @@
                                                 <h1 class="m-0" data-bind="text: stats_rating_bayesavg().toFixed(1)"></h1>
                                             </div>
                                         </div>
-                                        <div class="card-body">
-                                            Owned by: <span data-bind="text:owners().join(', ')"></span>
+                                        <div class="card-body" style="padding-top: 0px;padding-bottom: 0px;" data-bind="visible: $root.selectedCategories().length>0 || $root.selectedMechanics().length>0 ">
                                             <!-- ko foreach: categories-->
                                             <!-- ko if: $root.selectedCategories().includes($data)-->
                                             <span class="badge badge-primary text-white" data-bind="text:$data"></span>

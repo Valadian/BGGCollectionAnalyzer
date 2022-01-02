@@ -118,13 +118,12 @@ function BGGModel(){
                 $("#loading").show()
                 $("#loadfail").hide()
             //Get https://api.geekdo.com/xmlapi2/collection?username=berge403
-                try{
-                    processCollection(name) //.then(onRejected= () => new Promise(r => setTimeout(r, 1000)).then(()=>processCollection(username)))
-                } catch (err) {
+                processCollection(name).catch(e => {
                     console.log(err)
                     $("#loading").hide()
                     $("#loadfail").show()
-                }
+                }) //.then(onRejected= () => new Promise(r => setTimeout(r, 1000)).then(()=>processCollection(username)))
+
             }
         }
     }
