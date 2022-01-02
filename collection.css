@@ -13,6 +13,21 @@
 .filter-success{
     filter: invert(46%) sepia(39%) saturate(1711%) hue-rotate(94deg) brightness(100%) contrast(69%);
 }
+.player-best{
+    color: #00dc33!important;
+}
+.player-recommended{
+    color: #2f5e1d!important;
+}
+.player-ok{
+    color: #979200!important
+}
+.player-iffy{
+    color: #b8791a!important
+}
+.player-bad{
+    color: #8c0d0d!important
+}
 .player-icon{
     display:inline;
     margin-left:-7px;
@@ -123,6 +138,10 @@
 
 }
 @media (max-width: 600px) { /*Small Screen*/
+    .form-range{
+        width:80%;
+        margin-left:40px
+    }
     .owner-container{
         margin-top: 5px;
         margin-left:0px

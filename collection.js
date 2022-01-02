@@ -63,7 +63,7 @@ function BGGModel(){
     this.score_weight_scalar = function(ci){
         let weight_scalar = 1
         if (this.sortByWeight()){
-            weight_scalar = 1+1 - (Math.abs(ci.stats_weight_avg()-this.preferredWeight())/ci.stats_weight_avg())
+            weight_scalar = 1.5 - (Math.abs(ci.stats_weight_avg()-this.preferredWeight())/ci.stats_weight_avg())
         }
         return weight_scalar
     }
@@ -191,8 +191,8 @@ getThings = function(ids){
             obj.categories(links.filter(p => p.attributes["type"].value=="boardgamecategory").map(r => r.attributes['value'].value))
             obj.mechanics(links.filter(p => p.attributes["type"].value=="boardgamemechanic").map(r => r.attributes['value'].value))
             obj.families(links.filter(p => p.attributes["type"].value=="boardgamefamily").map(r => r.attributes['value'].value))
-            links_expansions = links.filter(p => p.attributes["type"].value=="boardgameexpansion" && p.attributes["inbound"]!=undefined)
-            obj.expansions(links_expansions.map(r => r.attributes['value'].value))
+            links_expansions = links.filter(p => p.attributes["type"].value=="boardgameexpansion" && p.attributes["inbound"]==undefined)
+            obj.expansion_names(links_expansions.map(r => r.attributes['value'].value))
             obj.expansion_ids(links_expansions.map(r => r.attributes['id'].value))
             ratings = item.getElementsByTagName('statistics')[0].getElementsByTagName("ratings")[0]
             obj.stats_rating_num(parseInt(ratings.getElementsByTagName("usersrated")[0].attributes['value'].value))
@@ -249,8 +249,12 @@ CollectionItem = function(item,username){
     this.categories = ko.observableArray([]), //link[type="boardgamecategory"]
     this.mechanics = ko.observableArray([]), //link[type="boardgamemechanic"]
     this.families = ko.observableArray([]), //link[type="boardgamefamily"]
-    this.expansions = ko.observableArray([]), //link[type="boardgameexpansion"]
+    this.expansion_names = ko.observableArray([]), //link[type="boardgameexpansion"]
     this.expansion_ids = ko.observableArray([]),
+    this.expansions = ko.computed(function(){
+        return this.expansion_ids().map(id => koModel.all_games_byid[id]).filter(g => g!=undefined)
+    },this),
+    this.showExpansions = ko.observable(false),
     this.stats_rating_num = ko.observable(0), //statistics>ratings>userrated[value]
     this.stats_rating_avg = ko.observable(0), //statistics>ratings>average[value]
     this.stats_rating_bayesavg = ko.observable(0), //statistics>ratings>bayesaverage[value]
