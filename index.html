@@ -96,8 +96,17 @@
                                 </button>
                             </h4>
                             <div id="preferredWeightSelection" class="accordion-collapse collapse show mb-3">
-                                <input type="range" min=1 max=5 step="0.1" class="form-range" data-bind="value: preferredWeight, valueUpdate: 'input'">
-                                <div>
+                                <div class="form-switch">
+                                    <input class="form-check-input" type="checkbox" data-bind="checked: sortByWeight">
+                                    <label class="form-check-label text-muted" data-bind="css: {
+                                        'text-muted': !sortByWeight(),
+                                        'text-success': sortByWeight
+                                    }">Enable Filtering By Weight</label>
+                                </div>
+                                <input type="range" min=1 max=5 step="0.1" class="form-range" data-bind="value: preferredWeight, valueUpdate: 'input', attr: {
+                                    disabled: !sortByWeight()
+                                }">
+                                <div data-bind="visible: sortByWeight">
                                     <span class="ml-3" data-bind="css: {
                                         'filter-danger':preferredWeight()>=4,
                                         'filter-warning':preferredWeight()>=3.4 && preferredWeight()<4,
@@ -162,7 +171,9 @@
                                                 <img class="rounded d-block boardgame-image" data-bind="attr:{src:image}" >
                                                 <div class="owner-container">
                                                     <!-- ko foreach: owners-->
-                                                    <div class="rounded-circle owner-circle" data-bind="text: $data.substring(0,2),attr:{title:'Owned by: '+$data}"></div>
+                                                    <div class="rounded-circle owner-circle" data-bind="text: $data.substring(0,2),attr:{title:'Owned by: '+$data},style:{
+                                                        'background-color':$root.playerColors[$data]
+                                                    }"></div>
                                                     <!-- /ko -->
                                                 </div>
                                             </div>

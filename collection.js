@@ -1,9 +1,12 @@
 function BGGModel(){
+    this.colorPalette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"] //matplotlib tab10
+    this.playerColors = {}
     this.username = ko.observable("berge403,computerdaz")
     this.playerCounts = ko.observableArray([1,2,3,4,5,6,7,8,9,10])
     this.selectedPlayerCounts = ko.observableArray([]) 
+    this.sortByWeight = ko.observable(false)
     this.preferredWeight = ko.observable(3.5).extend({ rateLimit: 250 });
-    this.maxTime = ko.observable(180).extend({ rateLimit: 250 });
+    this.maxTime = ko.observable(600).extend({ rateLimit: 250 });
     this.all_games = ko.observableArray([])
     this.base_games = ko.computed(function(){
         return this.all_games().filter(g => g.subtype()=="boardgame")
@@ -58,7 +61,10 @@ function BGGModel(){
         return mechanic_scalar
     }
     this.score_weight_scalar = function(ci){
-        let weight_scalar = 1+1 - (Math.abs(ci.stats_weight_avg()-this.preferredWeight())/ci.stats_weight_avg())
+        let weight_scalar = 1
+        if (this.sortByWeight()){
+            weight_scalar = 1+1 - (Math.abs(ci.stats_weight_avg()-this.preferredWeight())/ci.stats_weight_avg())
+        }
         return weight_scalar
     }
     this.score = function(ci){
@@ -115,6 +121,9 @@ function BGGModel(){
         if(this.username().length>0){
             names = this.username().split(",")
             for(var name of names){
+                if(!(name in this.playerColors)){
+                    this.playerColors[name] = this.colorPalette[Object.keys(this.playerColors).length % this.colorPalette.length]
+                }
                 $("#loading").show()
                 $("#loadfail").hide()
             //Get https://api.geekdo.com/xmlapi2/collection?username=berge403
@@ -285,13 +294,13 @@ loadData = function(){
     koModel = new BGGModel()
     ko.applyBindings(koModel);
 
-    setTimeout(function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let username = urlParams.get('name')
-        if (username){
-            koModel.username(username)
-        }
-    })
+    // setTimeout(function() {
+    //     const urlParams = new URLSearchParams(window.location.search);
+    //     let username = urlParams.get('name')
+    //     if (username){
+    //         koModel.username(username)
+    //     }
+    // })
     //read arguments (username)
     //if username not empty, dispatch job
     
