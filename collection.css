@@ -51,7 +51,6 @@
 .owner-circle {
     width: 30px;
     height: 30px;
-    background-color: black;
     text-align: center;
     line-height: 30px;
     margin-left: -40px;
@@ -59,8 +58,18 @@
     border: white 1px solid;
     font-size: small;
 }
+.owner-circle-small {
+    width: 15px;
+    height: 15px;
+    margin-left: -40px;
+    margin-top: -6px;
+}
 .owner-container{
     margin-top: -85px;
+}
+.owner-container-small{
+    margin-top: -40px;
+    margin-left: 10px;
 }
 .boardgame-image {
     width: 90px;
@@ -137,7 +146,10 @@
     color:#e9ecef;
 
 }
-@media (max-width: 600px) { /*Small Screen*/
+@media (max-width: 575px) { /*Small Screen*/
+    .card-body{
+        margin-left:15px;
+    }
     .form-range{
         width:80%;
         margin-left:40px
@@ -146,10 +158,18 @@
         margin-top: 5px;
         margin-left:0px
     }
+    .owner-container-small{
+        margin-top: 5px;
+        margin-left:0px
+    }
     .owner-circle{
         display: inline-block;
         margin-left: -12px;
         margin-top: -30px;
+    }
+    .owner-circle-small{
+        margin-left: 15px;
+        margin-top: -40px;
     }
     .card {
         margin-left: -15px;

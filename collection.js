@@ -1,9 +1,11 @@
 function BGGModel(){
     this.colorPalette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"] //matplotlib tab10
     this.playerColors = {}
-    this.username = ko.observable("berge403,computerdaz")
+    this.username = ko.observable("berge403,computerdaz,gibblefish,xtremedrummer7")
     this.playerCounts = ko.observableArray([1,2,3,4,5,6,7,8,9,10])
     this.selectedPlayerCounts = ko.observableArray([]) 
+    this.useBayesAvg = ko.observable(true)
+    this.sortByScore = ko.observable(true)
     this.sortByWeight = ko.observable(false)
     this.preferredWeight = ko.observable(3.5).extend({ rateLimit: 250 });
     this.maxTime = ko.observable(600).extend({ rateLimit: 250 });
@@ -67,8 +69,15 @@ function BGGModel(){
         }
         return weight_scalar
     }
+    this.score_scalar = function(ci){
+        let score_scalar = 1
+        if (this.sortByScore()){
+            score_scalar = (this.useBayesAvg()?ci.stats_rating_bayesavg():ci.stats_rating_avg())
+        }
+        return score_scalar
+    }
     this.score = function(ci){
-        return this.score_category_scalar(ci) * this.score_mechanic_scalar(ci) * this.score_weight_scalar(ci)*this.score_player_scalar(ci)*ci.stats_rating_bayesavg()
+        return this.score_category_scalar(ci) * this.score_mechanic_scalar(ci) * this.score_weight_scalar(ci)*this.score_player_scalar(ci)*this.score_scalar(ci)
     }
     this.games_filtered_sorted = ko.computed(function(){
         let result = this.base_games()
@@ -128,7 +137,7 @@ function BGGModel(){
                 $("#loadfail").hide()
             //Get https://api.geekdo.com/xmlapi2/collection?username=berge403
                 processCollection(name).catch(e => {
-                    console.log(err)
+                    console.log(e)
                     $("#loading").hide()
                     $("#loadfail").show()
                 }) //.then(onRejected= () => new Promise(r => setTimeout(r, 1000)).then(()=>processCollection(username)))
@@ -139,11 +148,13 @@ function BGGModel(){
 }
 getCollection = function(username){
     return $.get( "https://api.geekdo.com/xmlapi2/collection?username="+username, function ( data, textStatus, xhr ) {
-        if(xhr.status==200){
-            return (data, textStatus, xhr )
-        } else {
-            throw xhr.status+" "+textStatus
-        }
+        return $.Deferred(function(deferred){
+            if(xhr.status==200){
+                return deferred.resolve(data, textStatus, xhr )
+            } else {
+                return deferred.reject(xhr.status+" "+textStatus)
+            }
+        })
     })
 }
 getThings = function(ids){
@@ -184,6 +195,7 @@ getThings = function(ids){
                 suggested.best_percvotes(suggested.best_numvotes()/totalvotes)
                 suggested.recommended_percvotes(suggested.recommended_numvotes()/totalvotes)
                 suggested.notrecommended_percvotes(suggested.notrecommended_numvotes()/totalvotes)
+                suggested.total_numvotes(totalvotes)
             }
             obj.minplaytime(parseInt(item.getElementsByTagName('minplaytime')[0].attributes['value'].value))
             obj.maxplaytime(parseInt(item.getElementsByTagName('maxplaytime')[0].attributes['value'].value))
@@ -224,6 +236,7 @@ buildSuggestedPlayerCounts = function(){
             recommended_percvotes: ko.observable(0), //results[1][numvotes]/results[numplayers]
             notrecommended_numvotes: ko.observable(0), //results[2][numvotes]
             notrecommended_percvotes: ko.observable(0), //results[2][numvotes]/results[numplayers]
+            total_numvotes: ko.observable(0),
         })
     }
     return suggested_player_counts
