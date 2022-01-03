@@ -208,7 +208,7 @@
                                                                 'player-iffy':best_percvotes()<0.5 && notrecommended_percvotes()<=0.5 && notrecommended_percvotes()>0.37,
                                                                 'player-bad':(best_percvotes()<0.5 && notrecommended_percvotes()>0.5) || total_numvotes()==0,
                                                                 'text-dark':numplayers()<$parent.minplayers()
-                                                            }">
+                                                            }, attr:{title:description}">
                                                                 <i class="bi bi-person-fill" style="margin-right: -8px;" data-bind="css: {
                                                                     'bi-person-fill':numplayers()>=$parent.minplayers(),
                                                                     'bi-person':numplayers()<$parent.minplayers()

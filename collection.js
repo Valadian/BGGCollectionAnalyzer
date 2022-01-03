@@ -196,6 +196,18 @@ getThings = function(ids){
                 suggested.recommended_percvotes(suggested.recommended_numvotes()/totalvotes)
                 suggested.notrecommended_percvotes(suggested.notrecommended_numvotes()/totalvotes)
                 suggested.total_numvotes(totalvotes)
+                if (numplayers<obj.minplayers()){
+                    suggested.description("Min Players: "+obj.minplayers())
+                } else if (numplayers>obj.maxplayers()){
+                    suggested.description("Max Players: "+obj.maxplayers())
+                } else if (totalvotes==0){
+                    suggested.description("No Votes")
+                } else {
+                    suggested.description("For Player Count: "+numplayers+"\nBest: "+(suggested.best_percvotes()*100).toFixed(1)+"% ("+suggested.best_numvotes()+ " votes)\n"+
+                    "Recommend: "+(suggested.recommended_percvotes()*100).toFixed(1)+"% ("+suggested.recommended_numvotes()+ " votes)\n"+
+                    "Not: "+(suggested.notrecommended_percvotes()*100).toFixed(1)+"% ("+suggested.notrecommended_numvotes()+ " votes)\n")
+                }
+                
             }
             obj.minplaytime(parseInt(item.getElementsByTagName('minplaytime')[0].attributes['value'].value))
             obj.maxplaytime(parseInt(item.getElementsByTagName('maxplaytime')[0].attributes['value'].value))
@@ -237,6 +249,7 @@ buildSuggestedPlayerCounts = function(){
             notrecommended_numvotes: ko.observable(0), //results[2][numvotes]
             notrecommended_percvotes: ko.observable(0), //results[2][numvotes]/results[numplayers]
             total_numvotes: ko.observable(0),
+            description: ko.observable(0),
         })
     }
     return suggested_player_counts
