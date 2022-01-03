@@ -35,6 +35,17 @@ function BGGModel(){
         },[]).sort()
     },this)
     this.selectedMechanics = ko.observableArray([])
+    this.families = ko.computed(function(){
+        return this.base_games().map(g => g.families()).reduce((a,b)=> {
+            for(var i of b){
+                if(!(a.includes(i))){
+                    a.push(i)
+                }
+            }
+            return a
+        },[]).sort()
+    },this)
+    this.selectedFamilies = ko.observableArray([])
     this.all_games_byid = {}
     // this.expansions = ko.observableArray([])
     // this.expansions_byid = {}
@@ -62,6 +73,13 @@ function BGGModel(){
         }
         return mechanic_scalar
     }
+    this.score_family_scalar = function(ci){
+        let family_scalar = 1
+        if (this.selectedFamilies().length>0){
+            family_scalar = 1 +  this.selectedFamilies().map(mech => ci.families().includes(mech)?1:0).reduce((a,b)=>a+b)
+        }
+        return family_scalar
+    }
     this.score_weight_scalar = function(ci){
         let weight_scalar = 1
         if (this.sortByWeight()){
@@ -77,7 +95,7 @@ function BGGModel(){
         return score_scalar
     }
     this.score = function(ci){
-        return this.score_category_scalar(ci) * this.score_mechanic_scalar(ci) * this.score_weight_scalar(ci)*this.score_player_scalar(ci)*this.score_scalar(ci)
+        return this.score_category_scalar(ci) * this.score_mechanic_scalar(ci) * this.score_family_scalar(ci) * this.score_weight_scalar(ci)*this.score_player_scalar(ci)*this.score_scalar(ci)
     }
     this.games_filtered_sorted = ko.computed(function(){
         let result = this.base_games()
@@ -260,7 +278,7 @@ CollectionItem = function(item,username){
     this.subtype = ko.observable(item.attributes['subtype'].value),
     this.isBoardgame = ko.computed(() => this.subtype()=="boardgame",this),
     this.isExpansion = ko.computed(() => this.subtype()=="boardgameexpansion",this),
-    this.name = ko.observable(item.getElementsByTagName('name')[0].textContent),
+    this.name = ko.observable(item.getElementsByTagName('name')[0].textContent), //item.getElementsByTagName('originalname').length>0?item.getElementsByTagName('originalname')[0].textContent:
     this.yearpublished = ko.observable(parseInt(item.getElementsByTagName('yearpublished')[0].textContent)),
     this.image = ko.observable(item.getElementsByTagName('thumbnail')[0].textContent), //image
     this.status_own = ko.observable(item.getElementsByTagName('status')[0].attributes['own'].value=="1"),

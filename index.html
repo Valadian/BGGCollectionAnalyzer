@@ -165,6 +165,14 @@
                             <div id="preferredMechanicSelection" class="accordion-collapse collapse mb-3">
                                 <select data-bind="options: mechanics, selectedOptions: selectedMechanics" size="6" multiple="true" class="form-select" ></select>
                             </div>
+                            <h4>
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#preferredFamilySelection">
+                                    Preferred Family:
+                                </button>
+                            </h4>
+                            <div id="preferredFamilySelection" class="accordion-collapse collapse mb-3">
+                                <select data-bind="options: families, selectedOptions: selectedFamilies" size="6" multiple="true" class="form-select" ></select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -202,10 +210,10 @@
                                                     <!-- ko foreach: suggested_player_counts -->
                                                         <!-- ko if: numplayers()>0 && numplayers()<=$parent.maxplayers()-->
                                                             <h3 class="player-icon" data-bind="css:{
-                                                                'player-best':notrecommended_percvotes()<=0.1 || best_percvotes()>0.5,
-                                                                'player-recommended':best_percvotes()<0.5 && notrecommended_percvotes()<=0.24 && notrecommended_percvotes()>0.1,
-                                                                'player-ok':best_percvotes()<0.5 && notrecommended_percvotes()<=0.37 && notrecommended_percvotes()>0.24,
-                                                                'player-iffy':best_percvotes()<0.5 && notrecommended_percvotes()<=0.5 && notrecommended_percvotes()>0.37,
+                                                                'player-best':best_percvotes()>0.5,
+                                                                'player-recommended':best_percvotes()<0.5 && notrecommended_percvotes()<=0.17,// && notrecommended_percvotes()>0.1
+                                                                'player-ok':best_percvotes()<0.5 && notrecommended_percvotes()<=0.34 && notrecommended_percvotes()>0.17,
+                                                                'player-iffy':best_percvotes()<0.5 && notrecommended_percvotes()<=0.5 && notrecommended_percvotes()>0.34,
                                                                 'player-bad':(best_percvotes()<0.5 && notrecommended_percvotes()>0.5) || total_numvotes()==0,
                                                                 'text-dark':numplayers()<$parent.minplayers()
                                                             }, attr:{title:description}">
@@ -260,25 +268,35 @@
                                                 </span>
                                             </div>
                                             <div class="p-2" style="margin-top: -12px; margin-bottom: -12px; position:sticky;right:0" data-bind="class:'has-rating-'+Math.round(stats_rating_bayesavg())" >
-                                                <h1 class="m-0" data-bind="text: $root.useBayesAvg()?stats_rating_bayesavg().toFixed(1):stats_rating_avg().toFixed(1), attr: {title: stats_rating_avg().toFixed(1)+' Average\n'+stats_rating_bayesavg().toFixed(1)+' Geek Score'}"></h1>
+                                                <h1 class="m-0" data-bind="text: ($root.useBayesAvg() && stats_rating_bayesavg()>0)?stats_rating_bayesavg().toFixed(1):stats_rating_avg().toFixed(1), attr: {title: stats_rating_avg().toFixed(1)+' Average\n'+stats_rating_bayesavg().toFixed(1)+' Geek Score'}"></h1>
                                             </div>
                                         </div>
-                                        <div class="card-body" style="padding-top: 0px;padding-bottom: 0px;" data-bind="visible: $root.selectedCategories().length>0 || $root.selectedMechanics().length>0 ">
+                                        <div class="card-body" style="padding-top: 0px;padding-bottom: 0px;" data-bind="visible: $root.selectedCategories().length>0 || $root.selectedMechanics().length>0 || $root.selectedFamilies().length>0 ">
                                             <!-- ko foreach: categories-->
-                                            <!-- ko if: $root.selectedCategories().includes($data)-->
-                                            <span class="badge badge-primary text-white" data-bind="text:$data"></span>
+                                                <!-- ko if: $root.selectedCategories().includes($data)-->
+                                                <span class="badge badge-primary text-white" data-bind="text:$data"></span>
+                                                <!-- /ko -->
+                                                <!-- ko ifnot: $root.selectedCategories().includes($data)-->
+                                                <!-- <span class="badge badge-warning text-dark" data-bind="text:$data"></span> -->
+                                                <!-- /ko -->
                                             <!-- /ko -->
-                                            <!-- ko ifnot: $root.selectedCategories().includes($data)-->
-                                            <!-- <span class="badge badge-warning text-dark" data-bind="text:$data"></span> -->
-                                            <!-- /ko -->
-                                            <!-- /ko -->
+
                                             <!-- ko foreach: mechanics-->
-                                            <!-- ko if: $root.selectedMechanics().includes($data)-->
-                                            <span class="badge badge-success text-white" data-bind="text:$data"></span>
+                                                <!-- ko if: $root.selectedMechanics().includes($data)-->
+                                                <span class="badge badge-success text-white" data-bind="text:$data"></span>
+                                                <!-- /ko -->
+                                                <!-- ko ifnot: $root.selectedMechanics().includes($data)-->
+                                                <!-- <span class="badge badge-danger text-white" data-bind="text:$data"></span> -->
+                                                <!-- /ko -->
                                             <!-- /ko -->
-                                            <!-- ko ifnot: $root.selectedMechanics().includes($data)-->
-                                            <!-- <span class="badge badge-danger text-white" data-bind="text:$data"></span> -->
-                                            <!-- /ko -->
+
+                                            <!-- ko foreach: families-->
+                                                <!-- ko if: $root.selectedFamilies().includes($data)-->
+                                                <span class="badge badge-secondary text-white" data-bind="text:$data"></span>
+                                                <!-- /ko -->
+                                                <!-- ko ifnot: $root.selectedFamilies().includes($data)-->
+                                                <!-- <span class="badge badge-danger text-white" data-bind="text:$data"></span> -->
+                                                <!-- /ko -->
                                             <!-- /ko -->
                                         </div>
                                         <div class="card-body" data-bind="visible: showExpansions">
