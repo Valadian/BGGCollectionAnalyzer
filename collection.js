@@ -1,7 +1,7 @@
 function BGGModel(){
     this.colorPalette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"] //matplotlib tab10
     this.playerColors = {}
-    this.username = ko.observable("berge403") //berge403,computerdaz,gibblefish,xtremedrummer7
+    this.username = ko.observable("berge403,computerdaz,gibblefish,xtremedrummer7") //berge403,computerdaz,gibblefish,xtremedrummer7
     this.playerCounts = ko.observableArray([1,2,3,4,5,6,7,8,9,10])
     this.selectedPlayerCounts = ko.observableArray([]) 
     this.useBayesAvg = ko.observable(true)
