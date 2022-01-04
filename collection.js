@@ -53,7 +53,7 @@ function BGGModel(){
         let player_scalar = 1
         if (this.selectedPlayerCounts().length>0){
             let player_scalars = this.selectedPlayerCounts().map(
-                numplayers => ci.suggested_player_counts()[numplayers].recommended_percvotes() + ci.suggested_player_counts()[numplayers].best_percvotes()*2
+                numplayers => ci.suggested_player_counts_with_expansions(numplayers).recommended_percvotes() + ci.suggested_player_counts_with_expansions(numplayers).best_percvotes()*2
             )
             player_scalar = player_scalars.reduce((a, b) => a + b)/player_scalars.length
         }
@@ -100,7 +100,7 @@ function BGGModel(){
     this.games_filtered_sorted = ko.computed(function(){
         let result = this.base_games()
         if(this.selectedPlayerCounts().length>0){
-            result = result.filter(g => g.minplayers()<=Math.min(...this.selectedPlayerCounts()) && g.maxplayers()>=Math.max(...this.selectedPlayerCounts()))
+            result = result.filter(g => g.minplayers_with_expansions()<=Math.min(...this.selectedPlayerCounts()) && g.maxplayers_with_expansions()>=Math.max(...this.selectedPlayerCounts()))
         }
         result = result.filter(g => g.minplaytime()<=this.maxTime()*1.25)
         // let scoreFunc = (ci) => {
@@ -221,7 +221,12 @@ getThings = function(ids){
                 } else if (totalvotes==0){
                     suggested.description("No Votes")
                 } else {
-                    suggested.description("For Player Count: "+numplayers+"\nBest: "+(suggested.best_percvotes()*100).toFixed(1)+"% ("+suggested.best_numvotes()+ " votes)\n"+
+                    let prefix = ""
+                    if (obj.subtype()=="boardgameexpansion"){
+                        prefix = "With Expansion: "+obj.name()+"\n"
+                        suggested.expansion(true)
+                    }
+                    suggested.description("For Player Count: "+numplayers+"\n"+prefix+"Best: "+(suggested.best_percvotes()*100).toFixed(1)+"% ("+suggested.best_numvotes()+ " votes)\n"+
                     "Recommend: "+(suggested.recommended_percvotes()*100).toFixed(1)+"% ("+suggested.recommended_numvotes()+ " votes)\n"+
                     "Not: "+(suggested.notrecommended_percvotes()*100).toFixed(1)+"% ("+suggested.notrecommended_numvotes()+ " votes)\n")
                 }
@@ -268,6 +273,7 @@ buildSuggestedPlayerCounts = function(){
             notrecommended_percvotes: ko.observable(0), //results[2][numvotes]/results[numplayers]
             total_numvotes: ko.observable(0),
             description: ko.observable(0),
+            expansion: ko.observable(false)
         })
     }
     return suggested_player_counts
@@ -298,6 +304,23 @@ CollectionItem = function(item,username){
     this.expansions = ko.computed(function(){
         return this.expansion_ids().map(id => koModel.all_games_byid[id]).filter(g => g!=undefined)
     },this),
+    this.minplayers_with_expansions = ko.computed(function(){
+        return Math.min(this.minplayers(), ...this.expansions().map(e => e.minplayers()))
+    },this)
+    this.maxplayers_with_expansions = ko.computed(function(){
+        return Math.max(this.maxplayers(), ...this.expansions().map(e => e.maxplayers()))
+    },this)
+    this.suggested_player_counts_with_expansions  = function(playernum){
+        let options = [this.suggested_player_counts()[playernum], ...this.expansions().map(e => e.suggested_player_counts()[playernum])]
+        let best = options[0]
+        for(var option of options){
+            if ( option.total_numvotes()>best.total_numvotes() ){
+            // if ( (option.best_percvotes()>best.best_percvotes()) || (option.total_numvotes()>0 && (option.notrecommended_percvotes()<best.notrecommended_percvotes())) ){
+                best = option
+            }
+        }
+        return best
+    }
     this.showExpansions = ko.observable(false),
     this.stats_rating_num = ko.observable(0), //statistics>ratings>userrated[value]
     this.stats_rating_avg = ko.observable(0), //statistics>ratings>average[value]

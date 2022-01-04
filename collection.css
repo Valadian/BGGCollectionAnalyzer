@@ -36,6 +36,11 @@
     margin-left:-15px; 
     -webkit-text-stroke: 1px white; font-size: smaller
 }
+.player-icon-expansion-underline{
+    color: #a0a0a0;
+    font-size: xxx-large;    
+    margin-left: -27px;
+}
 .text-dark > .player-icon-text{
     -webkit-text-stroke: 1px black; font-size: smaller
 }
