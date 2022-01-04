@@ -272,7 +272,7 @@ buildSuggestedPlayerCounts = function(){
             notrecommended_numvotes: ko.observable(0), //results[2][numvotes]
             notrecommended_percvotes: ko.observable(0), //results[2][numvotes]/results[numplayers]
             total_numvotes: ko.observable(0),
-            description: ko.observable(0),
+            description: ko.observable("No Votes"),
             expansion: ko.observable(false)
         })
     }
