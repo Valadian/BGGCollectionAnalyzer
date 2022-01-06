@@ -1,4 +1,5 @@
 function BGGModel(){
+    MINMAXPLAYER_NOTRECOMMENDED_OVERRIDE = 0.75
     this.colorPalette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"] //matplotlib tab10
     this.playerColors = {}
     this.username = ko.observable("berge403,computerdaz,gibblefish,xtremedrummer7") //berge403,computerdaz,gibblefish,xtremedrummer7
@@ -214,9 +215,9 @@ getThings = function(ids){
                 suggested.recommended_percvotes(suggested.recommended_numvotes()/totalvotes)
                 suggested.notrecommended_percvotes(suggested.notrecommended_numvotes()/totalvotes)
                 suggested.total_numvotes(totalvotes)
-                if (numplayers<obj.minplayers()){
+                if (numplayers<obj.minplayers() && !(suggested.total_numvotes()>0 && suggested.notrecommended_percvotes()<MINMAXPLAYER_NOTRECOMMENDED_OVERRIDE)){
                     suggested.description("Min Players: "+obj.minplayers())
-                } else if (numplayers>obj.maxplayers()){
+                } else if (numplayers>obj.maxplayers() && !(suggested.total_numvotes()>0 && suggested.notrecommended_percvotes()<MINMAXPLAYER_NOTRECOMMENDED_OVERRIDE)){
                     suggested.description("Max Players: "+obj.maxplayers())
                 } else if (totalvotes==0){
                     suggested.description("No Votes")
@@ -280,47 +281,53 @@ buildSuggestedPlayerCounts = function(){
 }
 CollectionItem = function(item,username){
     this.owners = ko.observableArray([username])
-    this.objectid = ko.observable(parseInt(item.attributes['objectid'].value)),
-    this.subtype = ko.observable(item.attributes['subtype'].value),
-    this.isBoardgame = ko.computed(() => this.subtype()=="boardgame",this),
-    this.isExpansion = ko.computed(() => this.subtype()=="boardgameexpansion",this),
-    this.name = ko.observable(item.getElementsByTagName('name')[0].textContent), //item.getElementsByTagName('originalname').length>0?item.getElementsByTagName('originalname')[0].textContent:
-    this.yearpublished = ko.observable(parseInt(item.getElementsByTagName('yearpublished')[0].textContent)),
-    this.image = ko.observable(item.getElementsByTagName('thumbnail')[0].textContent), //image
-    this.status_own = ko.observable(item.getElementsByTagName('status')[0].attributes['own'].value=="1"),
-    this.numplays = ko.observable(item.getElementsByTagName('numplays')[0].textContent),
+    this.objectid = ko.observable(parseInt(item.attributes['objectid'].value))
+    this.subtype = ko.observable(item.attributes['subtype'].value)
+    this.isBoardgame = ko.computed(() => this.subtype()=="boardgame",this)
+    this.isExpansion = ko.computed(() => this.subtype()=="boardgameexpansion",this)
+    this.name = ko.observable(item.getElementsByTagName('name')[0].textContent) //item.getElementsByTagName('originalname').length>0?item.getElementsByTagName('originalname')[0].textContent:
+    this.yearpublished = ko.observable(parseInt(item.getElementsByTagName('yearpublished')[0].textContent))
+    this.image = ko.observable(item.getElementsByTagName('thumbnail')[0].textContent) //image
+    this.status_own = ko.observable(item.getElementsByTagName('status')[0].attributes['own'].value=="1")
+    this.numplays = ko.observable(item.getElementsByTagName('numplays')[0].textContent)
     //Populated in 2nd call
-    this.description = ko.observable(""), //description
-    this.minplayers  = ko.observable(0), //minplayers
-    this.maxplayers  = ko.observable(0), //maxplayers
-    this.suggested_player_counts = buildSuggestedPlayerCounts(), //poll[name="suggested_numplayers"]
-    this.minplaytime  = ko.observable(0), //minplaytime
-    this.maxplaytime  = ko.observable(0), //maxplaytime
-    this.categories = ko.observableArray([]), //link[type="boardgamecategory"]
-    this.mechanics = ko.observableArray([]), //link[type="boardgamemechanic"]
-    this.families = ko.observableArray([]), //link[type="boardgamefamily"]
-    this.expansion_names = ko.observableArray([]), //link[type="boardgameexpansion"]
-    this.expansion_ids = ko.observableArray([]),
+    this.description = ko.observable("") //description
+    this.minplayers  = ko.observable(0) //minplayers
+    this.maxplayers  = ko.observable(0) //maxplayers
+    this.suggested_player_counts = buildSuggestedPlayerCounts() //poll[name="suggested_numplayers"]
+    this.minplaytime  = ko.observable(0) //minplaytime
+    this.maxplaytime  = ko.observable(0) //maxplaytime
+    this.categories = ko.observableArray([]) //link[type="boardgamecategory"]
+    this.mechanics = ko.observableArray([]) //link[type="boardgamemechanic"]
+    this.families = ko.observableArray([]) //link[type="boardgamefamily"]
+    this.expansion_names = ko.observableArray([]) //link[type="boardgameexpansion"]
+    this.expansion_ids = ko.observableArray([])
     this.expansions = ko.computed(function(){
         return this.expansion_ids().map(id => koModel.all_games_byid[id]).filter(g => g!=undefined)
-    },this),
-    this.minplayers_with_expansions = ko.computed(function(){
-        return Math.min(this.minplayers(), ...this.expansions().map(e => e.minplayers()))
-    },this)
-    this.maxplayers_with_expansions = ko.computed(function(){
-        return Math.max(this.maxplayers(), ...this.expansions().map(e => e.maxplayers()))
     },this)
     this.suggested_player_counts_with_expansions  = function(playernum){
         let options = [this.suggested_player_counts()[playernum], ...this.expansions().map(e => e.suggested_player_counts()[playernum])]
         let best = options[0]
         for(var option of options){
-            if ( option.total_numvotes()>best.total_numvotes() ){
+            if ( option!=undefined && option.total_numvotes()>best.total_numvotes() ){
             // if ( (option.best_percvotes()>best.best_percvotes()) || (option.total_numvotes()>0 && (option.notrecommended_percvotes()<best.notrecommended_percvotes())) ){
                 best = option
             }
         }
         return best
     }
+    this.minplayers_from_suggested = ko.computed(function(){
+        return Math.min(this.minplayers(), ...this.suggested_player_counts().filter(p=>p.notrecommended_percvotes()<MINMAXPLAYER_NOTRECOMMENDED_OVERRIDE && p.notrecommended_numvotes()>0).map(p => p.numplayers()))
+    }, this)
+    this.maxplayers_from_suggested = ko.computed(function(){
+        return Math.max(this.maxplayers(), ...this.suggested_player_counts().filter(p=>p.notrecommended_percvotes()<MINMAXPLAYER_NOTRECOMMENDED_OVERRIDE && p.notrecommended_numvotes()>0).map(p => p.numplayers()))
+    }, this)
+    this.minplayers_with_expansions = ko.computed(function(){
+        return Math.min(this.minplayers_from_suggested(), ...this.expansions().map(e => e.minplayers_from_suggested()))
+    },this)
+    this.maxplayers_with_expansions = ko.computed(function(){
+        return Math.max(this.maxplayers_from_suggested(), ...this.expansions().map(e => e.maxplayers_from_suggested()))
+    },this)
     this.showExpansions = ko.observable(false),
     this.stats_rating_num = ko.observable(0), //statistics>ratings>userrated[value]
     this.stats_rating_avg = ko.observable(0), //statistics>ratings>average[value]
