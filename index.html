@@ -44,7 +44,7 @@
                             </div>
                             <div id="loading" style="display:none">
                                 <div class="d-flex align-items-center mt-3 mb-3">
-                                    <strong>Loading...</strong>
+                                    <strong>Loading<span data-bind="visible: loadingItemsRemaining() > 0">: <span data-bind="text: loadingItemsRemaining"></span> ids left</span>...</strong>
                                     <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
                                 </div>
                             </div>
@@ -186,6 +186,17 @@
                                     </button>
                                 </div>
                                 <div class="card-body collapse show" id="gamelist-card-body">
+                                    <div class="mb-3" data-bind="visible: selectedCategories().length>0 || selectedMechanics().length>0 || selectedFamilies().length>0">
+                                        <!-- ko foreach: selectedCategories -->
+                                        <button type="button" class="badge badge-primary text-white border-0 me-1 mb-1" data-bind="click: $root.removeSelectedCategory, text: $data + ' x'"></button>
+                                        <!-- /ko -->
+                                        <!-- ko foreach: selectedMechanics -->
+                                        <button type="button" class="badge badge-success text-white border-0 me-1 mb-1" data-bind="click: $root.removeSelectedMechanic, text: $data + ' x'"></button>
+                                        <!-- /ko -->
+                                        <!-- ko foreach: selectedFamilies -->
+                                        <button type="button" class="badge badge-secondary text-white border-0 me-1 mb-1" data-bind="click: $root.removeSelectedFamily, text: $data + ' x'"></button>
+                                        <!-- /ko -->
+                                    </div>
                                     <!-- ko foreach: {data: games_filtered_sorted, as: 'ci'} -->
                                     <div class="card mb-3">
                                         <div class="card-header d-flex pr-0">
@@ -275,7 +286,7 @@
                                             </div>
                                         </div>
                                         <div class="card-body" style="padding-top: 0px;padding-bottom: 0px;" data-bind="visible: $root.selectedCategories().length>0 || $root.selectedMechanics().length>0 || $root.selectedFamilies().length>0 ">
-                                            <!-- ko foreach: categories-->
+                                            <!-- ko foreach: categories_with_expansions-->
                                                 <!-- ko if: $root.selectedCategories().includes($data)-->
                                                 <span class="badge badge-primary text-white" data-bind="text:$data"></span>
                                                 <!-- /ko -->
@@ -284,7 +295,7 @@
                                                 <!-- /ko -->
                                             <!-- /ko -->
 
-                                            <!-- ko foreach: mechanics-->
+                                            <!-- ko foreach: mechanics_with_expansions-->
                                                 <!-- ko if: $root.selectedMechanics().includes($data)-->
                                                 <span class="badge badge-success text-white" data-bind="text:$data"></span>
                                                 <!-- /ko -->
@@ -293,7 +304,7 @@
                                                 <!-- /ko -->
                                             <!-- /ko -->
 
-                                            <!-- ko foreach: families-->
+                                            <!-- ko foreach: families_with_expansions-->
                                                 <!-- ko if: $root.selectedFamilies().includes($data)-->
                                                 <span class="badge badge-secondary text-white" data-bind="text:$data"></span>
                                                 <!-- /ko -->
@@ -302,7 +313,7 @@
                                                 <!-- /ko -->
                                             <!-- /ko -->
                                         </div>
-                                        <div class="card-body" data-bind="visible: showExpansions">
+                                        <div class="card-body" data-bind="visible: showExpansions() && expansions().length>0">
                                             <!-- ko foreach: expansions -->
                                             <div class="row">
                                                 <div class="col-2">
@@ -337,7 +348,8 @@
         </main>
         <footer class="collection-footer">
             <i>Found an issue? Have a Github account? Add an <a class="text-info" href="https://github.com/Valadian/BGGCollectionAnalyzer/issues">issue report</a> </i><br>
-            <i>BGG Collection Analyzer created by <a class="text-info" href="mailto:admin@jesseberger.me">Jesse Berger</a>
+            <i>BGG Collection Analyzer created by <a class="text-info" href="mailto:admin@jesseberger.me">Jesse Berger</a> <br>
+            <img border="0" src="https://cf.geekdo-images.com/HZy35cmzmmyV9BarSuk6ug__small/img/gbE7sulIurZE_Tx8EQJXnZSKI6w=/fit-in/200x150/filters:strip_icc()/pic7779581.png" alt="User: dakarp">
         </footer>
     </body>
 </html> 

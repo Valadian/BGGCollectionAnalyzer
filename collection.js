@@ -1,11 +1,25 @@
+BGG_API_TOKEN_PARTS = [
+    "MzY5YzM4MzFmZjg5",
+    "LWJkODgtZjc3NC03",
+    "YzYyLWMyMzliMzUw"
+]
+decodeBggApiToken = function(){
+    if(BGG_API_TOKEN_PARTS.length == 0){
+        return ""
+    }
+    return atob(BGG_API_TOKEN_PARTS.join("")).split("").reverse().join("")
+}
+
 function BGGModel(){
     MINMAXPLAYER_NOTRECOMMENDED_OVERRIDE = 0.75
     this.colorPalette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf"] //matplotlib tab10
     this.playerColors = {}
-    this.username = ko.observable("berge403,computerdaz,gibblefish,xtremedrummer7") //berge403,computerdaz,gibblefish,xtremedrummer7
+    this.username = ko.observable("berge403") //berge403,computerdaz,gibblefish,xtremedrummer7
+    this.bggApiToken = decodeBggApiToken()
+    this.loadingItemsRemaining = ko.observable(0)
     this.playerCounts = ko.observableArray([1,2,3,4,5,6,7,8,9,10])
     this.selectedPlayerCounts = ko.observableArray([]) 
-    this.useBayesAvg = ko.observable(true)
+    this.useBayesAvg = ko.observable(false)
     this.sortByScore = ko.observable(true)
     this.sortByWeight = ko.observable(false)
     this.preferredWeight = ko.observable(3.5).extend({ rateLimit: 250 });
@@ -15,7 +29,7 @@ function BGGModel(){
         return this.all_games().filter(g => g.subtype()=="boardgame")
     },this)
     this.categories = ko.computed(function(){
-        return this.base_games().map(g => g.categories()).reduce((a,b)=> {
+        return this.base_games().map(g => g.categories_with_expansions()).reduce((a,b)=> {
             for(var i of b){
                 if(!(a.includes(i))){
                     a.push(i)
@@ -25,8 +39,11 @@ function BGGModel(){
         },[]).sort()
     },this)
     this.selectedCategories = ko.observableArray([])
+    this.removeSelectedCategory = category => {
+        this.selectedCategories.remove(category)
+    }
     this.mechanics = ko.computed(function(){
-        return this.base_games().map(g => g.mechanics()).reduce((a,b)=> {
+        return this.base_games().map(g => g.mechanics_with_expansions()).reduce((a,b)=> {
             for(var i of b){
                 if(!(a.includes(i))){
                     a.push(i)
@@ -36,8 +53,11 @@ function BGGModel(){
         },[]).sort()
     },this)
     this.selectedMechanics = ko.observableArray([])
+    this.removeSelectedMechanic = mechanic => {
+        this.selectedMechanics.remove(mechanic)
+    }
     this.families = ko.computed(function(){
-        return this.base_games().map(g => g.families()).reduce((a,b)=> {
+        return this.base_games().map(g => g.families_with_expansions()).reduce((a,b)=> {
             for(var i of b){
                 if(!(a.includes(i))){
                     a.push(i)
@@ -47,6 +67,9 @@ function BGGModel(){
         },[]).sort()
     },this)
     this.selectedFamilies = ko.observableArray([])
+    this.removeSelectedFamily = family => {
+        this.selectedFamilies.remove(family)
+    }
     this.all_games_byid = {}
     // this.expansions = ko.observableArray([])
     // this.expansions_byid = {}
@@ -63,28 +86,28 @@ function BGGModel(){
     this.score_category_scalar = function(ci){
         let category_scalar = 1
         if (this.selectedCategories().length>0){
-            category_scalar = 1 +  this.selectedCategories().map(mech => ci.categories().includes(mech)?1:0).reduce((a,b)=>a+b) // / this.selectedCategories().length
+            category_scalar = 1 +  this.selectedCategories().map(mech => ci.categories_with_expansions().includes(mech)?1:0).reduce((a,b)=>a+b) // / this.selectedCategories().length
         }
         return category_scalar
     }
     this.score_mechanic_scalar = function(ci){
         let mechanic_scalar = 1
         if (this.selectedMechanics().length>0){
-            mechanic_scalar = 1 +  this.selectedMechanics().map(mech => ci.mechanics().includes(mech)?1:0).reduce((a,b)=>a+b) // / this.selectedMechanics().length
+            mechanic_scalar = 1 +  this.selectedMechanics().map(mech => ci.mechanics_with_expansions().includes(mech)?1:0).reduce((a,b)=>a+b) // / this.selectedMechanics().length
         }
         return mechanic_scalar
     }
     this.score_family_scalar = function(ci){
         let family_scalar = 1
         if (this.selectedFamilies().length>0){
-            family_scalar = 1 +  this.selectedFamilies().map(mech => ci.families().includes(mech)?1:0).reduce((a,b)=>a+b)
+            family_scalar = 1 +  this.selectedFamilies().map(mech => ci.families_with_expansions().includes(mech)?1:0).reduce((a,b)=>a+b)
         }
         return family_scalar
     }
     this.score_weight_scalar = function(ci){
         let weight_scalar = 1
         if (this.sortByWeight()){
-            weight_scalar = 1.5 - (Math.abs(ci.stats_weight_avg()-this.preferredWeight())/ci.stats_weight_avg())
+            weight_scalar = Math.max(0.25, 2.5 - (Math.abs(ci.stats_weight_avg()-this.preferredWeight())*1.5))
         }
         return weight_scalar
     }
@@ -103,7 +126,7 @@ function BGGModel(){
         if(this.selectedPlayerCounts().length>0){
             result = result.filter(g => g.minplayers_with_expansions()<=Math.min(...this.selectedPlayerCounts()) && g.maxplayers_with_expansions()>=Math.max(...this.selectedPlayerCounts()))
         }
-        result = result.filter(g => g.minplaytime()<=this.maxTime()*1.25)
+        result = result.filter(g => g.maxplaytime()<=this.maxTime()*1.25)
         // let scoreFunc = (ci) => {
             // let player_scalar = 1
             // if (this.selectedPlayerCounts().length>0){
@@ -147,38 +170,115 @@ function BGGModel(){
     
     this.loaduser = () => {
         if(this.username().length>0){
+            this.all_games([])
+            this.all_games_byid = {}
             names = this.username().split(",")
             for(var name of names){
                 if(!(name in this.playerColors)){
                     this.playerColors[name] = this.colorPalette[Object.keys(this.playerColors).length % this.colorPalette.length]
                 }
                 $("#loading").show()
-                $("#loadfail").hide()
-            //Get https://api.geekdo.com/xmlapi2/collection?username=berge403
+                this.loadingItemsRemaining(0)
+                $("#loadfailed").hide()
+            //Get https://boardgamegeek.com/xmlapi2/collection?username=berge403
                 processCollection(name).catch(e => {
                     console.log(e)
+                    this.loadingItemsRemaining(0)
                     $("#loading").hide()
-                    $("#loadfail").show()
+                    $("#loadfailed").show()
                 }) //.then(onRejected= () => new Promise(r => setTimeout(r, 1000)).then(()=>processCollection(username)))
 
             }
         }
     }
 }
-getCollection = function(username){
-    return $.get( "https://api.geekdo.com/xmlapi2/collection?username="+username, function ( data, textStatus, xhr ) {
-        return $.Deferred(function(deferred){
-            if(xhr.status==200){
-                return deferred.resolve(data, textStatus, xhr )
-            } else {
-                return deferred.reject(xhr.status+" "+textStatus)
+getBggRequestHeaders = function(){
+    const token = koModel.bggApiToken.trim()
+    if(token.length == 0){
+        return {}
+    }
+    return {
+        Authorization: "Bearer "+token
+    }
+}
+getCollection = function(username, params, attempt){
+    params = params || {}
+    attempt = attempt || 1
+    const maxAttempts = 10
+    const retryDelayMs = Math.min(30000, attempt * 3000)
+    const searchParams = new URLSearchParams({
+        username: username
+    })
+    for(var key in params){
+        searchParams.set(key, params[key])
+    }
+    return $.ajax({
+        url: "https://boardgamegeek.com/xmlapi2/collection?"+searchParams.toString(),
+        method: "GET",
+        headers: getBggRequestHeaders()
+    }).then(
+        (data, textStatus, xhr) => {
+            if(xhr.status == 202){
+                if(attempt >= maxAttempts){
+                    return $.Deferred().reject("Collection request still queued after "+attempt+" attempts").promise()
+                }
+                return new Promise(resolve => setTimeout(resolve, retryDelayMs)).then(() => getCollection(username, params, attempt + 1))
             }
+            if(xhr.status == 200){
+                return data
+            }
+            return $.Deferred().reject(xhr.status+" "+textStatus).promise()
+        },
+        xhr => {
+            return $.Deferred().reject(xhr.status+" "+xhr.statusText).promise()
+        }
+    )
+}
+getThingBatch = function(ids){
+    return $.ajax({
+        url: "https://boardgamegeek.com/xmlapi2/thing?stats=1&id="+ids.map(id => encodeURIComponent(id)).join(","),
+        method: "GET",
+        headers: getBggRequestHeaders()
+    }).then(processThingData)
+}
+getThings = function(ids, hideLoadingWhenDone){
+    hideLoadingWhenDone = hideLoadingWhenDone !== false
+    if(!Array.isArray(ids)){
+        return $.Deferred().reject("Invalid collection item ids to load").promise()
+    }
+    if(ids.length == 0){
+        koModel.loadingItemsRemaining(0)
+        if(hideLoadingWhenDone){
+            $("#loading").hide()
+        }
+        return $.Deferred().resolve().promise()
+    }
+    koModel.loadingItemsRemaining(ids.length)
+    const batchSize = 20
+    const batchDelayMs = 2000
+    const batches = []
+    for(var i=0; i<ids.length; i+=batchSize){
+        batches.push(ids.slice(i, i+batchSize))
+    }
+    return batches.reduce((chain, batch, index) => {
+        return chain.then(() => {
+            if(index == 0){
+                return getThingBatch(batch).then(() => {
+                    koModel.loadingItemsRemaining(Math.max(0, koModel.loadingItemsRemaining() - batch.length))
+                })
+            }
+            return new Promise(resolve => setTimeout(resolve, batchDelayMs)).then(() => getThingBatch(batch)).then(() => {
+                koModel.loadingItemsRemaining(Math.max(0, koModel.loadingItemsRemaining() - batch.length))
+            })
         })
+    }, Promise.resolve()).then(() => {
+        koModel.loadingItemsRemaining(0)
+        if(hideLoadingWhenDone){
+            $("#loading").hide()
+        }
     })
 }
-getThings = function(ids){
-    return $.get( "https://api.geekdo.com/xmlapi2/thing?stats=1&id="+(ids.join(",")))
-    .then(onFulfilled = ( data, textStatus, xhr ) => {
+processThingData = function(data){
         let items = data.children[0].children
         for(var item of items){
             id = parseInt(item.attributes['id'].value)
@@ -258,8 +358,6 @@ getThings = function(ids){
                 })
             }
         }
-        $("#loading").hide()
-    })
 }
 buildSuggestedPlayerCounts = function(){
     suggested_player_counts = ko.observableArray([])
@@ -278,6 +376,22 @@ buildSuggestedPlayerCounts = function(){
         })
     }
     return suggested_player_counts
+}
+getCollectionRatingValue = function(item, tagName){
+    let stats = item.getElementsByTagName('stats')[0]
+    if(stats == undefined){
+        return 0
+    }
+    let rating = stats.getElementsByTagName('rating')[0]
+    if(rating == undefined){
+        return 0
+    }
+    let valueNode = rating.getElementsByTagName(tagName)[0]
+    if(valueNode == undefined || valueNode.attributes['value'] == undefined){
+        return 0
+    }
+    let value = parseFloat(valueNode.attributes['value'].value)
+    return isNaN(value) ? 0 : value
 }
 CollectionItem = function(item,username){
     this.owners = ko.observableArray([username])
@@ -305,6 +419,15 @@ CollectionItem = function(item,username){
     this.expansions = ko.computed(function(){
         return this.expansion_ids().map(id => koModel.all_games_byid[id]).filter(g => g!=undefined)
     },this)
+    this.categories_with_expansions = ko.computed(function(){
+        return [this.categories(), ...this.expansions().map(e => e.categories())].flat().filter((value, index, array) => array.indexOf(value) == index)
+    },this)
+    this.mechanics_with_expansions = ko.computed(function(){
+        return [this.mechanics(), ...this.expansions().map(e => e.mechanics())].flat().filter((value, index, array) => array.indexOf(value) == index)
+    },this)
+    this.families_with_expansions = ko.computed(function(){
+        return [this.families(), ...this.expansions().map(e => e.families())].flat().filter((value, index, array) => array.indexOf(value) == index)
+    },this)
     this.suggested_player_counts_with_expansions  = function(playernum){
         let options = [this.suggested_player_counts()[playernum], ...this.expansions().map(e => e.suggested_player_counts()[playernum])]
         let best = options[0]
@@ -329,43 +452,73 @@ CollectionItem = function(item,username){
         return Math.max(this.maxplayers_from_suggested(), ...this.expansions().map(e => e.maxplayers_from_suggested()))
     },this)
     this.showExpansions = ko.observable(false),
-    this.stats_rating_num = ko.observable(0), //statistics>ratings>userrated[value]
-    this.stats_rating_avg = ko.observable(0), //statistics>ratings>average[value]
-    this.stats_rating_bayesavg = ko.observable(0), //statistics>ratings>bayesaverage[value]
-    this.stats_rating_std = ko.observable(0) //statistics>ratings>stddev[value]
-    this.stats_weight_num = ko.observable(0) //statistics>ratings>numweights[value]
-    this.stats_weight_avg = ko.observable(0) //statistics>ratings>averageweight[value]
+    this.stats_rating_num = ko.observable(getCollectionRatingValue(item, "usersrated")), //statistics>ratings>userrated[value]
+    this.stats_rating_avg = ko.observable(getCollectionRatingValue(item, "average")), //statistics>ratings>average[value]
+    this.stats_rating_bayesavg = ko.observable(getCollectionRatingValue(item, "bayesaverage")), //statistics>ratings>bayesaverage[value]
+    this.stats_rating_std = ko.observable(getCollectionRatingValue(item, "stddev")) //statistics>ratings>stddev[value]
+    this.stats_weight_num = ko.observable(getCollectionRatingValue(item, "numweights")) //statistics>ratings>numweights[value]
+    this.stats_weight_avg = ko.observable(getCollectionRatingValue(item, "averageweight")) //statistics>ratings>averageweight[value]
     this.stats_ranks = ko.observableArray([]) //foreach: statistics>ratings>ranks>rank {name, value}
 }
-processCollection = function(username){
-    return getCollection(username).then(
-        onFulfilled=( data, textStatus, xhr ) => {
-            // koModel.all_games([])
-            // koModel.expansions([])
-            ids = []
-            let items = data.children[0].children
-            for (var item of items){
-                ci = new CollectionItem(item,username)
-                isDuplicate = ci.objectid() in koModel.all_games_byid
-                if(ci.status_own()){
-                    if (!isDuplicate){
-                        ids.push(ci.objectid())
-                        koModel.all_games.push(ci)
-                        koModel.all_games_byid[ci.objectid()] = ci
-                    } else {
-                        ci = koModel.all_games_byid[ci.objectid()]
-                        if (!ci.owners().includes(username)){
-                            ci.owners.push(username)
-                        }
-                    }
+collectionGeekRating = function(ci){
+    return ci.stats_rating_bayesavg() || ci.stats_rating_avg() || 0
+}
+sortCollectionItemsByGeekRating = function(items){
+    return items.sort((a,b) => collectionGeekRating(b) - collectionGeekRating(a))
+}
+refreshExpansionLinks = function(){
+    for(var game of koModel.base_games()){
+        game.expansion_ids.valueHasMutated()
+    }
+}
+addCollectionItems = function(data, username, includeInMainList){
+    let collectionItems = []
+    let items = data.children[0].children
+    for (var item of items){
+        ci = new CollectionItem(item,username)
+        if(includeInMainList && !ci.isBoardgame()){
+            continue
+        }
+        if(!includeInMainList && !ci.isExpansion()){
+            continue
+        }
+        isDuplicate = ci.objectid() in koModel.all_games_byid
+        if(ci.status_own()){
+            if (!isDuplicate){
+                collectionItems.push(ci)
+                koModel.all_games_byid[ci.objectid()] = ci
+                if(includeInMainList){
+                    koModel.all_games.push(ci)
+                }
+            } else {
+                ci = koModel.all_games_byid[ci.objectid()]
+                if (!ci.owners().includes(username)){
+                    ci.owners.push(username)
                 }
             }
-            return ids
         }
-        ,onRejected = (textStatus, xhr) => {
-            console.log("First Attempt not successful: "+xhr.status)
-        }
-    ).then(getThings) //https://api.geekdo.com/xmlapi2/thing?id=241451,180263&stats=1
+    }
+    if(!includeInMainList){
+        refreshExpansionLinks()
+    }
+    return sortCollectionItemsByGeekRating(collectionItems).map(ci => ci.objectid())
+}
+processCollection = function(username){
+    return getCollection(username, {
+        own: "1",
+        stats: "1",
+        excludesubtype: "boardgameexpansion"
+    }).then(data => {
+        return getThings(addCollectionItems(data, username, true), false)
+    }).then(() => {
+        return getCollection(username, {
+            own: "1",
+            stats: "1",
+            subtype: "boardgameexpansion"
+        })
+    }).then(data => {
+        return getThings(addCollectionItems(data, username, false), true)
+    }) //https://boardgamegeek.com/xmlapi2/thing?id=241451,180263&stats=1
 }
 loadData = function(){
     ko.options.deferUpdates = true
